@@ -548,23 +548,54 @@ label{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.
 
 <script>
 // ═══ DATA ═══
-let contacts=[
+// ═══ LOCALSTORAGE SAVE / LOAD ═══
+const STORAGE_KEY = 'orange_viagens_crm_v1';
+
+const DEFAULT_CONTACTS = [
   {id:1,nome:"Ana Paula Souza",data1:"2026-05-10",omni:"https://omni.exemplo.com/ana",tel:"(11) 98765-4321",proxfup:"2026-06-03",status:"1 FUP - Análise",viagem:"2026-06-20",sol:["Ingressos","Hotel"],pos:["Passagem aérea"],obs:"Família de 4 pessoas. Disney.",vendaIds:[]},
   {id:2,nome:"Ricardo Mendes",data1:"2026-05-15",omni:"https://omni.exemplo.com/ricardo",tel:"(21) 99234-5678",proxfup:"2026-06-05",status:"2 FUP - Atualização",viagem:"2026-07-15",sol:["Passagem aérea","Pacote completo"],pos:["Nenhum"],obs:"Casal. Lua de mel. Europa.",vendaIds:[]},
   {id:3,nome:"Carla Oliveira",data1:"2026-04-20",omni:"https://omni.exemplo.com/carla",tel:"(19) 97654-3210",proxfup:"2026-05-28",status:"Desistiu após o 3º FUP",viagem:"",sol:["Hotel"],pos:["Passagem aérea"],obs:"Sem retorno após 3 FUPs. Achou caro.",vendaIds:[]},
   {id:4,nome:"Marcos Ferreira",data1:"2026-03-01",omni:"https://omni.exemplo.com/marcos",tel:"(11) 91234-5678",proxfup:"",status:"Virou cliente - Orange",viagem:"2026-08-10",sol:["Pacote completo"],pos:["Pacote completo"],obs:"Orange confirmado. Orlando em agosto.\n[Pedido 2026-001 · Pacote completo]",vendaIds:[1]},
   {id:5,nome:"Juliana Costa",data1:"2026-05-22",omni:"https://omni.exemplo.com/juliana",tel:"(47) 98888-1234",proxfup:"2026-06-07",status:"3 FUP - Respondeu 1 vez (parado)",viagem:"2026-06-05",sol:["Ingressos","Passagem aérea"],pos:["Hospedagem"],obs:"Respondeu uma vez e parou.",vendaIds:[]}
 ];
-let vendas=[
+const DEFAULT_VENDAS = [
   {id:1,pedido:"2026-001",pax:"Marcos Ferreira",contactId:4,data:"2026-03-15",valor:18500,pct:10,produto:"Pacote completo",obs:"Orlando - grupo 6 pax"},
   {id:2,pedido:"2026-002",pax:"Fernanda Lima",contactId:null,data:"2026-04-02",valor:4200,pct:8,produto:"Hotel",obs:"Punta Cana 7 noites"},
   {id:3,pedido:"2026-003",pax:"Bruno Cardoso",contactId:null,data:"2026-05-18",valor:9800,pct:12,produto:"Passagem aérea",obs:"GRU-MIA 4 pax"},
   {id:4,pedido:"2026-004",pax:"Patricia Nunes",contactId:null,data:"2026-06-01",valor:14200,pct:11,produto:"Pacote completo",obs:"Europa 12 dias"}
 ];
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const d = JSON.parse(saved);
+      return {
+        contacts: d.contacts || DEFAULT_CONTACTS,
+        vendas: d.vendas || DEFAULT_VENDAS,
+        profile: d.profile || {nome:'Vendedor',cargo:'Consultor de Viagens'},
+        activeTheme: d.activeTheme || 'dark',
+        activeFont: d.activeFont || 'dm'
+      };
+    }
+  } catch(e) {}
+  return { contacts: DEFAULT_CONTACTS, vendas: DEFAULT_VENDAS, profile: {nome:'Vendedor',cargo:'Consultor de Viagens'}, activeTheme:'dark', activeFont:'dm' };
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ contacts, vendas, profile, activeTheme, activeFont }));
+  } catch(e) {}
+}
+
+const _loaded = loadData();
+let contacts = _loaded.contacts;
+let vendas   = _loaded.vendas;
+let profile  = _loaded.profile;
+
 let contactEditId=null,vendaEditId=null,filterVal='todos';
 let currentYear=new Date().getFullYear(),currentMonth=new Date().getMonth();
 let selectedContactId=null;
-let profile={nome:'Vendedor',cargo:'Consultor de Viagens'};
 
 // ═══ UTILS ═══
 const fmtDate=d=>{if(!d)return'—';const p=d.split('-');return`${p[2]}/${p[1]}/${p[0]}`};
@@ -615,6 +646,7 @@ function applyTheme(id){
   r.setProperty('--surface2',t.surface2);r.setProperty('--surface3',t.surface3);
   r.setProperty('--text',t.text);r.setProperty('--text2',t.text2);r.setProperty('--text3',t.text3);
   r.setProperty('--border',t.border);r.setProperty('--border2',t.border2);
+  saveData();
   buildThemeUI();
 }
 function applyFont(id){
@@ -622,6 +654,7 @@ function applyFont(id){
   const f=FONTS.find(x=>x.id===id);
   document.documentElement.style.setProperty('--font-body',f.val);
   document.querySelectorAll('.search-input,.filter-pill,.form-input,.form-select,.form-textarea,.btn,.nav-item,.stat-label,.tag,.obs-cell,.date-text,.phone-text,.comm-val,.badge,.trip-badge').forEach(el=>el.style.fontFamily=f.val);
+  saveData();
   buildThemeUI();
 }
 
@@ -655,6 +688,7 @@ function saveProfile(){
   document.getElementById('profile-name-display').textContent=profile.nome;
   document.getElementById('profile-role-display').textContent=profile.cargo;
   document.getElementById('modalProfile').classList.remove('open');
+  saveData();
   showToast('Perfil atualizado');
 }
 
@@ -744,7 +778,7 @@ function renderContacts(){
 function editFup(id,el){
   const c=contacts.find(x=>x.id===id);
   const inp=document.createElement('input');inp.type='date';inp.className='fup-input';inp.value=c.proxfup||'';
-  inp.onblur=()=>{c.proxfup=inp.value;renderContacts();};
+  inp.onblur=()=>{c.proxfup=inp.value;saveData();renderContacts();};
   inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape')renderContacts();};
   el.replaceWith(inp);inp.focus();
 }
@@ -783,13 +817,13 @@ function saveContact(){
   const obj={nome,data1:document.getElementById('f-data1').value,tel:document.getElementById('f-tel').value,omni:document.getElementById('f-omni').value,proxfup:document.getElementById('f-proxfup').value,status:document.getElementById('f-status').value,viagem:document.getElementById('f-viagem').value,sol,pos,obs:document.getElementById('f-obs').value};
   if(contactEditId){const i=contacts.findIndex(x=>x.id===contactEditId);contacts[i]={...contacts[i],...obj};showToast('Contato atualizado');}
   else{obj.id=Date.now();obj.vendaIds=[];contacts.push(obj);showToast('Contato adicionado');}
-  closeContactModal();renderContacts();
+  closeContactModal();saveData();renderContacts();
 }
 function delContact(id){
   if(confirm('Remover este contato?')){
     contacts=contacts.filter(x=>x.id!==id);
     vendas.forEach(v=>{if(v.contactId===id)v.contactId=null;});
-    renderContacts();showToast('Contato removido');
+    saveData();renderContacts();showToast('Contato removido');
   }
 }
 function toggleCb(el){const cb=el.querySelector('input[type="checkbox"]');cb.checked=!cb.checked;el.classList.toggle('checked',cb.checked);}
@@ -929,7 +963,7 @@ function saveVenda(){
     if(selectedContactId)linkContactToVenda(selectedContactId,obj.id,pedido,produto);
     showToast('Venda registrada');
   }
-  closeVendaModal();renderVendas();renderContacts();
+  closeVendaModal();saveData();renderVendas();renderContacts();
 }
 function linkContactToVenda(contactId,vendaId,pedido,produto){
   const c=contacts.find(x=>x.id===contactId);if(!c)return;
@@ -950,7 +984,7 @@ function delVenda(id){
         if(!c.vendaIds.length&&c.status==='Virou cliente - Orange')c.status='2 FUP - Atualização';
       }
     }
-    vendas=vendas.filter(x=>x.id!==id);renderVendas();renderContacts();showToast('Venda removida');
+    vendas=vendas.filter(x=>x.id!==id);saveData();renderVendas();renderContacts();showToast('Venda removida');
   }
 }
 function exportVendasCSV(){
@@ -1080,6 +1114,18 @@ function showToast(msg,icon='✓'){
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));});
 
 // ═══ INIT ═══
+// restore theme & font from saved data
+activeTheme = _loaded.activeTheme;
+activeFont  = _loaded.activeFont;
+if(activeTheme !== 'dark') applyTheme(activeTheme);
+if(activeFont  !== 'dm')   applyFont(activeFont);
+
+// restore profile display
+const _initials = profile.nome.split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
+document.getElementById('avatar-chip').textContent = _initials;
+document.getElementById('profile-name-display').textContent = profile.nome;
+document.getElementById('profile-role-display').textContent = profile.cargo;
+
 buildThemeUI();
 renderContacts();
 renderVendas();
