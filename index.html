@@ -1181,29 +1181,47 @@ async function initApp(user){
   renderVendas();
 }
 
-// timeout de segurança: se demorar mais de 8s, mostra login
+// verificação imediata de sessão + timeout agressivo
 let _authResolved = false;
-const _authTimeout = setTimeout(()=>{
-  if(!_authResolved){
-    document.getElementById('loading-screen').style.display='none';
-    document.getElementById('app').style.display='none';
-    document.getElementById('login-screen').style.display='flex';
-  }
-}, 8000);
 
-// listen for auth state
-sb.auth.onAuthStateChange(async(event,session)=>{
-  _authResolved = true;
-  clearTimeout(_authTimeout);
+function showLogin(){
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-btn').disabled=false;
+  document.getElementById('login-btn').textContent='Entrar';
+}
+
+// timeout de segurança: 5 segundos
+const _authTimeout = setTimeout(()=>{
+  if(!_authResolved){ _authResolved=true; showLogin(); }
+}, 5000);
+
+// tenta pegar sessão atual imediatamente
+sb.auth.getSession().then(({data:{session}})=>{
+  if(_authResolved) return;
   if(session?.user){
+    _authResolved=true;
+    clearTimeout(_authTimeout);
+    document.getElementById('login-screen').style.display='none';
+    initApp(session.user);
+  } else {
+    _authResolved=true;
+    clearTimeout(_authTimeout);
+    showLogin();
+  }
+}).catch(()=>{
+  if(!_authResolved){ _authResolved=true; clearTimeout(_authTimeout); showLogin(); }
+});
+
+// listener para mudanças de auth (login/logout)
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(event==='SIGNED_IN' && session?.user){
     document.getElementById('login-screen').style.display='none';
     await initApp(session.user);
-  }else{
-    document.getElementById('loading-screen').style.display='none';
-    document.getElementById('app').style.display='none';
-    document.getElementById('login-screen').style.display='flex';
-    document.getElementById('login-btn').disabled=false;
-    document.getElementById('login-btn').textContent='Entrar';
+  }
+  if(event==='SIGNED_OUT'){
+    showLogin();
   }
 });
 </script>
