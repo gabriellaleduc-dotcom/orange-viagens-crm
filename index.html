@@ -1159,26 +1159,30 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelect
 
 // ═══ INIT ═══
 async function initApp(user){
-  currentUser=user;
-  // restore theme/font/profile from localStorage
-  const savedTheme=localStorage.getItem('ov_theme')||'dark';
-  const savedFont=localStorage.getItem('ov_font')||'dm';
-  const savedProfile=localStorage.getItem('ov_profile');
-  if(savedProfile)try{profile=JSON.parse(savedProfile);}catch(e){}
-  activeTheme=savedTheme;activeFont=savedFont;
-  if(savedTheme!=='dark')applyTheme(savedTheme);
-  if(savedFont!=='dm')applyFont(savedFont);
-  const i=profile.nome.split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
-  document.getElementById('avatar-chip').textContent=i;
-  document.getElementById('profile-name-display').textContent=profile.nome;
-  document.getElementById('profile-role-display').textContent=profile.cargo;
-  buildThemeUI();
-  // load data
-  await Promise.all([loadContacts(),loadVendas()]);
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('app').style.display='block';
-  renderContacts();
-  renderVendas();
+  try{
+    currentUser=user;
+    const savedTheme=localStorage.getItem('ov_theme')||'dark';
+    const savedFont=localStorage.getItem('ov_font')||'dm';
+    const savedProfile=localStorage.getItem('ov_profile');
+    if(savedProfile)try{profile=JSON.parse(savedProfile);}catch(e){}
+    activeTheme=savedTheme;activeFont=savedFont;
+    if(savedTheme!=='dark')applyTheme(savedTheme);
+    if(savedFont!=='dm')applyFont(savedFont);
+    const i=profile.nome.split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
+    document.getElementById('avatar-chip').textContent=i;
+    document.getElementById('profile-name-display').textContent=profile.nome;
+    document.getElementById('profile-role-display').textContent=profile.cargo;
+    buildThemeUI();
+    await Promise.all([loadContacts(),loadVendas()]);
+  }catch(err){
+    console.error('Erro initApp:',err);
+  }finally{
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    try{renderContacts();}catch(e){console.error(e);}
+    try{renderVendas();}catch(e){console.error(e);}
+  }
 }
 
 // verificação imediata de sessão + timeout agressivo
