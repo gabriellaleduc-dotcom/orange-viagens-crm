@@ -625,10 +625,12 @@ async function loadVendas(){
 }
 
 async function upsertContact(obj){
+  const solArr=Array.isArray(obj.sol)?obj.sol:(obj.sol?[obj.sol]:[]);
+  const posArr=Array.isArray(obj.pos)?obj.pos:(obj.pos?[obj.pos]:[]);
   const row={
     user_id:currentUser.id, nome:obj.nome, data1:obj.data1, omni:obj.omni, tel:obj.tel,
     proxfup:obj.proxfup, status:obj.status, viagem:obj.viagem,
-    sol:obj.sol||[], pos:obj.pos||[], obs:obj.obs, venda_ids:obj.vendaIds||[]
+    sol:solArr, pos:posArr, obs:obj.obs, venda_ids:obj.vendaIds||[]
   };
   if(obj.id&&typeof obj.id==='string'&&obj.id.includes('-')&&obj.id.length>30){
     row.id=obj.id;
@@ -825,16 +827,18 @@ function renderContacts(){
     const fupTip=fc==='overdue'?' ⚑':fc==='today'?' ●':'';
     const isD=c.status==='Desistiu após o 3º FUP';
     const rc=isD?'desistiu':tripRowClass(c.viagem);
+    const posArr=Array.isArray(c.pos)?c.pos:(c.pos?[c.pos]:[]);
+    const solArr=Array.isArray(c.sol)?c.sol:(c.sol?[c.sol]:[]);
     return`<tr class="${rc}">
       <td><div class="client-name">${c.nome}</div></td>
       <td><div class="date-text">${fmtDate(c.data1)}</div></td>
       <td>${c.omni?`<a href="${c.omni}" class="omni-link" target="_blank">↗ Abrir</a>`:'<span style="color:var(--text3);font-size:12px">—</span>'}</td>
       <td><div class="phone-text">${c.tel||'—'}</div></td>
       <td><span class="fup-date ${fc}" onclick="editFup('${c.id}',this)">${fupLabel}${fupTip}</span></td>
-      <td>${statusBadge(c.status)}</td>
+      <td><span onclick="editStatus('${c.id}',this)" title="Clique para alterar o status" style="cursor:pointer">${statusBadge(c.status)}</span></td>
       <td>${tripBadge(c.viagem)}</td>
-      <td>${renderTags(c.sol,false)}</td>
-      <td>${renderTags(c.pos,true)}</td>
+      <td>${renderTags(solArr,false)}</td>
+      <td>${renderTags(posArr,true)}</td>
       <td>${renderSaleTags(c)}</td>
       <td><div class="obs-cell" title="${c.obs||''}">${c.obs||'—'}</div></td>
       <td><div class="row-actions">
@@ -866,6 +870,29 @@ function editFup(id,el){
   inp.onblur=async()=>{c.proxfup=inp.value;await upsertContact(c);renderContacts();};
   inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape')renderContacts();};
   el.replaceWith(inp);inp.focus();
+}
+
+const ALL_STATUSES=['1 FUP - Análise','2 FUP - Atualização','3 FUP - Nunca respondeu (retorno)','3 FUP - Respondeu 1 vez (parado)','Em atendimento','Desistiu após o 3º FUP','Virou cliente - Orange'];
+
+function editStatus(id, el){
+  const c=contacts.find(x=>x.id===id);
+  const sel=document.createElement('select');
+  sel.style.cssText='background:var(--surface2);border:1px solid var(--accent);border-radius:7px;color:var(--text);font-family:var(--font-body);font-size:12px;padding:5px 8px;outline:none;cursor:pointer;max-width:180px';
+  ALL_STATUSES.forEach(s=>{
+    const opt=document.createElement('option');
+    opt.value=s;opt.textContent=s;
+    if(s===c.status)opt.selected=true;
+    sel.appendChild(opt);
+  });
+  sel.onchange=async()=>{
+    c.status=sel.value;
+    await upsertContact(c);
+    renderContacts();
+    showToast('Status atualizado');
+  };
+  sel.onblur=()=>renderContacts();
+  sel.onkeydown=e=>{if(e.key==='Escape')renderContacts();};
+  el.replaceWith(sel);sel.focus();
 }
 function setFilter(v,el){filterVal=v;document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderContacts();}
 function goFupPending(){showPage('contatos');filterVal='todos';document.getElementById('search').value='';renderContacts();}
