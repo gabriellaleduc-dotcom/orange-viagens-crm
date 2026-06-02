@@ -1181,8 +1181,20 @@ async function initApp(user){
   renderVendas();
 }
 
+// timeout de segurança: se demorar mais de 8s, mostra login
+let _authResolved = false;
+const _authTimeout = setTimeout(()=>{
+  if(!_authResolved){
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('app').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+  }
+}, 8000);
+
 // listen for auth state
 sb.auth.onAuthStateChange(async(event,session)=>{
+  _authResolved = true;
+  clearTimeout(_authTimeout);
   if(session?.user){
     document.getElementById('login-screen').style.display='none';
     await initApp(session.user);
