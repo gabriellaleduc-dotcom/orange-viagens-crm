@@ -817,7 +817,11 @@ function updateMeta(){
   localStorage.setItem(`ov_meta_${currentYear}_${currentMonth}`, meta);
 }
 function renderContacts(){
-  const list=contacts.filter(filterMatches);
+  const list=contacts.filter(filterMatches).sort((a,b)=>{
+    const aD=a.status==='Desistiu após o 3º FUP'?1:0;
+    const bD=b.status==='Desistiu após o 3º FUP'?1:0;
+    return aD-bD;
+  });
   const tb=document.getElementById('tbody-contacts');
   const today=todayISO();
   if(!list.length){tb.innerHTML=`<tr><td colspan="12"><div class="no-data shimmer"><div class="no-data-icon">◈</div><div>Nenhum contato encontrado</div></div></td></tr>`;return;}
