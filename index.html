@@ -628,20 +628,21 @@ async function upsertContact(obj){
   const solArr=Array.isArray(obj.sol)?obj.sol:(obj.sol?[obj.sol]:[]);
   const posArr=Array.isArray(obj.pos)?obj.pos:(obj.pos?[obj.pos]:[]);
   const row={
-    user_id:currentUser.id, nome:obj.nome, data1:obj.data1, omni:obj.omni, tel:obj.tel,
-    proxfup:obj.proxfup, status:obj.status, viagem:obj.viagem,
-    sol:solArr, pos:posArr, obs:obj.obs, venda_ids:obj.vendaIds||[]
+    user_id:currentUser.id, nome:obj.nome, data1:obj.data1||null, omni:obj.omni||null, tel:obj.tel||null,
+    proxfup:obj.proxfup||null, status:obj.status||null, viagem:obj.viagem||null,
+    sol:solArr, pos:posArr, obs:obj.obs||null, venda_ids:obj.vendaIds||[]
   };
-  if(obj.id&&typeof obj.id==='string'&&obj.id.includes('-')&&obj.id.length>30){
-    row.id=obj.id;
-    const {error}=await sb.from('contacts').upsert(row);
-    if(error)console.error(error);
+  if(obj.id){
+    // update existing record
+    const {error}=await sb.from('contacts').update(row).eq('id',obj.id).eq('user_id',currentUser.id);
+    if(error)console.error('Erro update contact:',error);
+    return obj.id;
   }else{
+    // insert new record
     const {data,error}=await sb.from('contacts').insert(row).select().single();
-    if(error)console.error(error);
-    else return data.id;
+    if(error){console.error('Erro insert contact:',error);return null;}
+    return data.id;
   }
-  return obj.id;
 }
 
 async function deleteContact(id){
@@ -650,20 +651,19 @@ async function deleteContact(id){
 
 async function upsertVenda(obj){
   const row={
-    user_id:currentUser.id, pedido:obj.pedido, pax:obj.pax,
-    contact_id:obj.contactId||null, data:obj.data, valor:obj.valor, pct:obj.pct,
-    produto:obj.produto, obs:obj.obs
+    user_id:currentUser.id, pedido:obj.pedido||null, pax:obj.pax,
+    contact_id:obj.contactId||null, data:obj.data||null, valor:obj.valor||0, pct:obj.pct||0,
+    produto:obj.produto||null, obs:obj.obs||null
   };
-  if(obj.id&&typeof obj.id==='string'&&obj.id.includes('-')&&obj.id.length>30){
-    row.id=obj.id;
-    const {error}=await sb.from('vendas').upsert(row);
-    if(error)console.error(error);
+  if(obj.id){
+    const {error}=await sb.from('vendas').update(row).eq('id',obj.id).eq('user_id',currentUser.id);
+    if(error)console.error('Erro update venda:',error);
+    return obj.id;
   }else{
     const {data,error}=await sb.from('vendas').insert(row).select().single();
-    if(error)console.error(error);
-    else return data.id;
+    if(error){console.error('Erro insert venda:',error);return null;}
+    return data.id;
   }
-  return obj.id;
 }
 
 async function deleteVenda(id){
