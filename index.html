@@ -245,6 +245,35 @@ label{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.
 .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
 .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
 .avatar-big{width:60px;height:60px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--accent);font-family:var(--font-display);flex-shrink:0;margin:0 auto 16px}
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.dash-alert-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;cursor:pointer;transition:border-color .2s}
+.dash-alert-card:hover{border-color:var(--border2)}
+.dash-section{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.dash-card-title{font-family:var(--font-display);font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text);display:flex;align-items:center;gap:8px}
+.dash-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .15s}
+.dash-item:hover{opacity:.8}
+.dash-item:last-child{border-bottom:none}
+.dash-item-name{font-size:13px;font-weight:500;color:var(--text)}
+.dash-item-sub{font-size:11.5px;color:var(--text3);margin-top:2px}
+.dash-item-badge{flex-shrink:0;margin-left:12px}
+.dash-empty{font-size:13px;color:var(--text3);padding:16px 0;text-align:center}
+/* HISTORICO */
+.hist-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.hist-item:last-child{border-bottom:none}
+.hist-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.hist-content{flex:1}
+.hist-date{font-size:11.5px;color:var(--text3);margin-bottom:3px}
+.hist-tipo{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:4px;display:inline-block;margin-bottom:4px}
+.hist-nota{font-size:13px;color:var(--text)}
+.hist-add{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);flex-wrap:wrap}
+.hist-tipo-select{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font-body);font-size:13px;padding:8px 10px;outline:none;flex-shrink:0;width:150px}
+.hist-tipo-select:focus{border-color:var(--accent)}
+.hist-input{flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font-body);font-size:13px;padding:8px 12px;outline:none;resize:none}
+.hist-input:focus{border-color:var(--accent)}
+.hist-input::placeholder{color:var(--text3)}
+.modal-lg{width:740px}
 .toast{position:fixed;bottom:28px;right:28px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 18px;font-size:13.5px;color:var(--text);z-index:999;opacity:0;transform:translateY(10px);transition:all .25s;display:flex;align-items:center;gap:9px;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
 .toast-icon{color:var(--green);font-size:16px}
@@ -299,7 +328,8 @@ label{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.
   </div>
   <nav class="nav-section">
     <div class="nav-label">Principal</div>
-    <div class="nav-item active" id="nav-contatos" onclick="showPage('contatos')"><span class="nav-icon">⬡</span> Contatos<span class="nav-badge" id="sidebar-count">0</span></div>
+    <div class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')"><span class="nav-icon">⊞</span> Painel do dia</div>
+    <div class="nav-item" id="nav-contatos" onclick="showPage('contatos')"><span class="nav-icon">⬡</span> Contatos<span class="nav-badge" id="sidebar-count">0</span></div>
     <div class="nav-item" id="nav-vendas" onclick="showPage('vendas')"><span class="nav-icon">◈</span> Vendas realizadas<span class="nav-badge" id="sidebar-vendas-count">0</span></div>
     <div class="nav-item" id="nav-relatorios" onclick="showPage('relatorios')"><span class="nav-icon">◉</span> Relatórios</div>
   </nav>
@@ -326,8 +356,27 @@ label{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.
 </aside>
 
 <main class="main">
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="dash-greeting">Bom dia! 👋</div>
+        <div class="page-sub">Aqui está um resumo do seu dia</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="showPage('contatos');openContactModal()">+ Novo contato</button>
+      </div>
+    </div>
+    <!-- cards resumo -->
+    <div class="dash-grid" id="dash-grid"></div>
+    <!-- seções -->
+    <div class="dash-section" id="dash-section"></div>
+    <!-- meta do mês -->
+    <div id="dash-meta"></div>
+  </div>
+
   <!-- CONTATOS -->
-  <div class="page active" id="page-contatos">
+  <div class="page" id="page-contatos">
     <div class="topbar">
       <div><div class="page-title">Contatos</div><div class="page-sub">Gerencie seus leads e clientes</div></div>
       <div class="topbar-actions">
@@ -543,6 +592,34 @@ label{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.
   </div>
 </div>
 
+<!-- MODAL HISTÓRICO -->
+<div class="modal-overlay" id="modalHistorico">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="hist-modal-nome">Histórico</div>
+        <div style="font-size:12.5px;color:var(--text3);margin-top:3px" id="hist-modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('modalHistorico').classList.remove('open')">✕</button>
+    </div>
+    <!-- add interação -->
+    <div class="hist-add">
+      <select class="hist-tipo-select" id="hist-tipo-input">
+        <option value="FUP">📞 FUP</option>
+        <option value="WhatsApp">💬 WhatsApp</option>
+        <option value="E-mail">📧 E-mail</option>
+        <option value="Proposta enviada">📋 Proposta enviada</option>
+        <option value="Negociação">🤝 Negociação</option>
+        <option value="Observação">📝 Observação</option>
+      </select>
+      <textarea class="hist-input" id="hist-nota-input" placeholder="Descreva o que foi conversado..." rows="2"></textarea>
+      <button class="btn btn-primary" onclick="addInteracao()" style="align-self:flex-end;flex-shrink:0">+ Registrar</button>
+    </div>
+    <!-- lista -->
+    <div id="hist-lista" style="margin-top:8px;max-height:420px;overflow-y:auto"></div>
+  </div>
+</div>
+
 <!-- MODAL PERFIL -->
 <div class="modal-overlay" id="modalProfile">
   <div class="modal modal-sm">
@@ -565,11 +642,12 @@ const SUPA_KEY = 'sb_publishable_UyPvS5PzTuYWHaeF3czNWQ_UcTJ5kt4';
 const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ═══ STATE ═══
-let contacts=[], vendas=[];
+let contacts=[], vendas=[], interacoes=[];
 let contactEditId=null, vendaEditId=null, filterVal='todos';
-let sortOrder='recente'; // 'recente' or 'antigo'
-let tempFilter='todos';  // 'todos', 'quente', 'frio'
-let currentTempSel='nenhuma'; // for modal
+let sortOrder='recente';
+let tempFilter='todos';
+let currentTempSel='nenhuma';
+let currentHistContactId=null;
 let currentYear=new Date().getFullYear(), currentMonth=new Date().getMonth();
 let selectedContactId=null;
 let profile={nome:'Vendedor',cargo:'Consultor de Viagens'};
@@ -646,6 +724,21 @@ async function loadContacts(){
 async function loadVendas(){
   const {data,error}=await sb.from('vendas').select('*').order('created_at',{ascending:false});
   if(!error)vendas=data.map(r=>({...r,contactId:r.contact_id}));
+}
+async function loadInteracoes(){
+  const {data,error}=await sb.from('interacoes').select('*').order('created_at',{ascending:false});
+  if(!error)interacoes=data||[];
+}
+async function insertInteracao(contactId,tipo,nota){
+  const row={user_id:currentUser.id,contact_id:contactId,tipo,nota,data:todayISO()};
+  const {data,error}=await sb.from('interacoes').insert(row).select().single();
+  if(error){console.error('Erro insert interacao:',error);return null;}
+  interacoes.unshift(data);
+  return data;
+}
+async function deleteInteracao(id){
+  await sb.from('interacoes').delete().eq('id',id);
+  interacoes=interacoes.filter(x=>x.id!==id);
 }
 
 async function upsertContact(obj){
@@ -739,6 +832,163 @@ function showPage(p){
   document.getElementById('nav-'+p).classList.add('active');
   if(p==='relatorios')renderRelatorios();
   if(p==='vendas')renderVendas();
+  if(p==='dashboard')renderDashboard();
+}
+
+// ═══ DASHBOARD ═══
+function renderDashboard(){
+  const hour=new Date().getHours();
+  const greet=hour<12?'Bom dia':'hour'<18?'Boa tarde':'Boa noite';
+  const greeting=hour<12?'Bom dia':'hour'<18?'Boa tarde':'Boa noite';
+  document.getElementById('dash-greeting').textContent=(hour<12?'Bom dia':hour<18?'Boa tarde':'Boa noite')+', '+profile.nome+'! 👋';
+  const today=todayISO();
+  const fupHoje=contacts.filter(c=>c.proxfup===today&&c.status!=='Virou cliente - Orange'&&c.status!=='Desistiu após o 3º FUP');
+  const fupVencido=contacts.filter(c=>c.proxfup&&c.proxfup<today&&c.status!=='Virou cliente - Orange'&&c.status!=='Desistiu após o 3º FUP');
+  const quentes=contacts.filter(c=>c.temperatura==='quente'&&c.status!=='Virou cliente - Orange'&&c.status!=='Desistiu após o 3º FUP');
+  const viagens=contacts.filter(c=>{const d=daysUntil(c.viagem);return d!==null&&d>=0&&d<=7;});
+  const monthStr=`${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+  const mVol=vendas.filter(v=>v.data&&v.data.startsWith(monthStr)).reduce((s,v)=>s+Number(v.valor||0),0);
+  const metaSaved=parseFloat(localStorage.getItem(`ov_meta_${currentYear}_${currentMonth}`))||0;
+  const metaPct=metaSaved>0?Math.min((mVol/metaSaved)*100,100):0;
+
+  document.getElementById('dash-grid').innerHTML=`
+    <div class="dash-alert-card" onclick="goFupPending()" style="border-color:${fupHoje.length>0?'rgba(240,168,66,.4)':'var(--border)'}">
+      <div style="font-size:28px;margin-bottom:8px">📅</div>
+      <div style="font-family:var(--font-display);font-size:30px;font-weight:700;color:${fupHoje.length>0?'var(--amber)':'var(--text)'}">${fupHoje.length}</div>
+      <div class="stat-label" style="margin-top:4px">FUPs para hoje</div>
+    </div>
+    <div class="dash-alert-card" onclick="setFilterAndGo('todos')" style="border-color:${fupVencido.length>0?'rgba(240,112,112,.4)':'var(--border)'}">
+      <div style="font-size:28px;margin-bottom:8px">⚠️</div>
+      <div style="font-family:var(--font-display);font-size:30px;font-weight:700;color:${fupVencido.length>0?'var(--red)':'var(--text)'}">${fupVencido.length}</div>
+      <div class="stat-label" style="margin-top:4px">FUPs vencidos</div>
+    </div>
+    <div class="dash-alert-card" onclick="setFilterAndGo('quente')" style="border-color:${quentes.length>0?'rgba(255,140,66,.4)':'var(--border)'}">
+      <div style="font-size:28px;margin-bottom:8px">🔥</div>
+      <div style="font-family:var(--font-display);font-size:30px;font-weight:700;color:${quentes.length>0?'var(--orange)':'var(--text)'}">${quentes.length}</div>
+      <div class="stat-label" style="margin-top:4px">Leads quentes</div>
+    </div>
+    <div class="dash-alert-card" onclick="goUrgent()" style="border-color:${viagens.length>0?'rgba(255,77,109,.4)':'var(--border)'}">
+      <div style="font-size:28px;margin-bottom:8px">✈️</div>
+      <div style="font-family:var(--font-display);font-size:30px;font-weight:700;color:${viagens.length>0?'var(--urgent)':'var(--text)'}">${viagens.length}</div>
+      <div class="stat-label" style="margin-top:4px">Viagens em 7 dias</div>
+    </div>`;
+
+  // FUPs de hoje e vencidos
+  const fupList=[...fupHoje.map(c=>({...c,_tipo:'hoje'})),...fupVencido.slice(0,5).map(c=>({...c,_tipo:'vencido'}))];
+  const fupHtml=fupList.length?fupList.map(c=>`
+    <div class="dash-item" onclick="showPage('contatos')">
+      <div>
+        <div class="dash-item-name">${tempEmoji(c.temperatura)}${c.nome}</div>
+        <div class="dash-item-sub">${c._tipo==='hoje'?'FUP hoje':'⚠️ Vencido: '+fmtDate(c.proxfup)} · ${c.status}</div>
+      </div>
+      <div class="dash-item-badge">${statusBadge(c.status)}</div>
+    </div>`).join(''):`<div class="dash-empty">✓ Nenhum FUP pendente hoje</div>`;
+
+  // leads quentes
+  const qHtml=quentes.length?quentes.slice(0,5).map(c=>`
+    <div class="dash-item" onclick="showPage('contatos')">
+      <div>
+        <div class="dash-item-name">🔥 ${c.nome}</div>
+        <div class="dash-item-sub">${c.tel||'—'} · ${(c.sol||[]).join(', ')||'—'}</div>
+      </div>
+      <div class="dash-item-badge">${statusBadge(c.status)}</div>
+    </div>`).join(''):`<div class="dash-empty">Nenhum lead quente no momento</div>`;
+
+  document.getElementById('dash-section').innerHTML=`
+    <div class="dash-card">
+      <div class="dash-card-title">📅 FUPs — hoje e pendentes</div>
+      ${fupHtml}
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-title">🔥 Leads quentes</div>
+      ${qHtml}
+    </div>`;
+
+  // meta do mês
+  const metaHtml=metaSaved>0?`
+    <div class="dash-card" style="margin-bottom:0">
+      <div class="dash-card-title">🎯 Meta de ${MONTHS[currentMonth]}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;color:var(--text2)">${fmtMoney(mVol)} de ${fmtMoney(metaSaved)}</span>
+        <span style="font-family:var(--font-display);font-size:22px;font-weight:700;color:${metaPct>=100?'var(--green)':metaPct>=70?'var(--amber)':'var(--accent)'}">${metaPct.toFixed(1)}%</span>
+      </div>
+      <div style="height:10px;background:var(--surface3);border-radius:5px;overflow:hidden">
+        <div style="height:100%;width:${metaPct}%;background:${metaPct>=100?'var(--green)':'var(--accent)'};border-radius:5px;transition:width .5s"></div>
+      </div>
+      <div style="font-size:12.5px;color:var(--text3);margin-top:8px">${metaPct>=100?'🎉 Meta batida!':'Faltam '+fmtMoney(Math.max(metaSaved-mVol,0))+' para bater a meta'}</div>
+    </div>`:
+    `<div class="dash-card" style="margin-bottom:0;text-align:center;color:var(--text3);font-size:13px">
+      <div style="font-size:24px;margin-bottom:8px">🎯</div>
+      <div>Defina sua meta mensal na aba <strong>Vendas realizadas</strong></div>
+    </div>`;
+  document.getElementById('dash-meta').innerHTML=metaHtml;
+}
+
+function setFilterAndGo(temp){
+  showPage('contatos');
+  if(temp==='quente'){
+    tempFilter='quente';
+    document.querySelectorAll('#temp-todos,#temp-quente,#temp-frio').forEach(b=>b.classList.remove('active'));
+    document.getElementById('temp-quente').classList.add('active');
+  }
+  renderContacts();
+}
+
+// ═══ HISTÓRICO ═══
+function tipoColor(tipo){
+  const map={'FUP':'var(--amber)','WhatsApp':'var(--green)','E-mail':'var(--blue)','Proposta enviada':'var(--purple)','Negociação':'var(--orange)','Observação':'var(--text3)'};
+  return map[tipo]||'var(--text3)';
+}
+
+async function openHistorico(contactId){
+  currentHistContactId=contactId;
+  const c=contacts.find(x=>x.id===contactId);
+  document.getElementById('hist-modal-nome').textContent=c?c.nome:'Histórico';
+  document.getElementById('hist-modal-sub').textContent=c?`${c.tel||''} · ${c.status||''}`:'' ;
+  document.getElementById('hist-nota-input').value='';
+  renderHistLista();
+  document.getElementById('modalHistorico').classList.add('open');
+}
+
+function renderHistLista(){
+  const lista=interacoes.filter(x=>x.contact_id===currentHistContactId);
+  const el=document.getElementById('hist-lista');
+  if(!lista.length){
+    el.innerHTML=`<div style="text-align:center;padding:28px;color:var(--text3);font-size:13px">Nenhuma interação registrada ainda.<br>Registre acima o que foi conversado.</div>`;
+    return;
+  }
+  el.innerHTML=lista.map(i=>`
+    <div class="hist-item">
+      <div class="hist-dot" style="background:${tipoColor(i.tipo)}"></div>
+      <div class="hist-content">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span class="hist-tipo" style="background:${tipoColor(i.tipo)}22;color:${tipoColor(i.tipo)}">${i.tipo}</span>
+          <span class="hist-date">${fmtDate(i.data)}</span>
+        </div>
+        <div class="hist-nota">${i.nota||'—'}</div>
+      </div>
+      <button class="icon-btn del" onclick="removerInteracao('${i.id}')" title="Remover" style="flex-shrink:0;align-self:flex-start">✕</button>
+    </div>`).join('');
+}
+
+async function addInteracao(){
+  const tipo=document.getElementById('hist-tipo-input').value;
+  const nota=document.getElementById('hist-nota-input').value.trim();
+  if(!nota){document.getElementById('hist-nota-input').focus();return;}
+  const btn=document.querySelector('#modalHistorico .btn-primary');
+  btn.disabled=true;btn.textContent='Salvando...';
+  await insertInteracao(currentHistContactId,tipo,nota);
+  document.getElementById('hist-nota-input').value='';
+  btn.disabled=false;btn.textContent='+ Registrar';
+  renderHistLista();
+  showToast('Interação registrada');
+}
+
+async function removerInteracao(id){
+  if(!confirm('Remover esta interação?'))return;
+  await deleteInteracao(id);
+  renderHistLista();
+  showToast('Removida');
 }
 
 // ═══ PROFILE ═══
@@ -905,6 +1155,7 @@ function renderContacts(){
       <td>${renderSaleTags(c)}</td>
       <td><div class="obs-cell" title="${c.obs||''}">${c.obs||'—'}</div></td>
       <td><div class="row-actions">
+        <button class="icon-btn" style="color:var(--blue);border-color:rgba(110,180,247,.3)" onclick="openHistorico('${c.id}')" title="Histórico">📋</button>
         <button class="icon-btn sell" onclick="openVendaFromContact('${c.id}')" title="Registrar venda">◈</button>
         <button class="icon-btn edit" onclick="openContactEdit('${c.id}')" title="Editar">✎</button>
         <button class="icon-btn del" onclick="delContact('${c.id}')" title="Remover">✕</button>
@@ -1241,7 +1492,7 @@ function showToast(msg,icon='✓'){
   setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-['modalContact','modalVenda','modalProfile'].forEach(id=>{
+['modalContact','modalVenda','modalProfile','modalHistorico'].forEach(id=>{
   document.getElementById(id).addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));});
@@ -1262,13 +1513,14 @@ async function initApp(user){
     document.getElementById('profile-name-display').textContent=profile.nome;
     document.getElementById('profile-role-display').textContent=profile.cargo;
     buildThemeUI();
-    await Promise.all([loadContacts(),loadVendas()]);
+    await Promise.all([loadContacts(),loadVendas(),loadInteracoes()]);
   }catch(err){
     console.error('Erro initApp:',err);
   }finally{
     document.getElementById('loading-screen').style.display='none';
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app').style.display='block';
+    try{renderDashboard();}catch(e){console.error(e);}
     try{renderContacts();}catch(e){console.error(e);}
     try{renderVendas();}catch(e){console.error(e);}
   }
