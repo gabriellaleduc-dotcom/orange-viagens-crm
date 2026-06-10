@@ -349,6 +349,19 @@ label{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.
     </div>
     <div class="toolbar">
       <div class="search-wrap"><span class="search-icon">⌕</span><input type="text" class="search-input" placeholder="Buscar por nome ou telefone..." id="search" oninput="renderContacts()"></div>
+      <!-- ordenação -->
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:12px;color:var(--text3)">Ordenar:</span>
+        <button class="filter-pill active" id="sort-recente" onclick="setSort('recente',this)">↓ Mais recentes</button>
+        <button class="filter-pill" id="sort-antigo" onclick="setSort('antigo',this)">↑ Mais antigos</button>
+      </div>
+      <!-- temperatura -->
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:12px;color:var(--text3)">Temperatura:</span>
+        <button class="filter-pill active" id="temp-todos" onclick="setTemp('todos',this)">Todos</button>
+        <button class="filter-pill" id="temp-quente" onclick="setTemp('quente',this)">🔥 Quente</button>
+        <button class="filter-pill" id="temp-frio" onclick="setTemp('frio',this)">🧊 Frio</button>
+      </div>
       <div class="filters">
         <button class="filter-pill active" onclick="setFilter('todos',this)">Todos</button>
         <button class="filter-pill" onclick="setFilter('1fup',this)">1 FUP</button>
@@ -362,7 +375,7 @@ label{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.
       </div>
     </div>
     <div class="table-card"><div class="table-scroll"><table>
-      <thead><tr><th>Cliente</th><th>1º Contato</th><th>Omni</th><th>Telefone</th><th>Próx. FUP</th><th>Status</th><th>Data da viagem</th><th>Solicitou</th><th>Já possui</th><th>Vendas</th><th>Observação</th><th></th></tr></thead>
+      <thead><tr><th>Cliente</th><th>Temp.</th><th>1º Contato</th><th>Omni</th><th>Telefone</th><th>Próx. FUP</th><th>Status</th><th>Data da viagem</th><th>Solicitou</th><th>Já possui</th><th>Vendas</th><th>Observação</th><th></th></tr></thead>
       <tbody id="tbody-contacts"></tbody>
     </table></div></div>
   </div>
@@ -455,6 +468,14 @@ label{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.
         </select>
       </div>
       <div class="form-group full"><label>Data da viagem</label><input type="date" class="form-input" id="f-viagem"></div>
+      <div class="form-group full">
+        <label>Temperatura do lead</label>
+        <div class="cb-grid" id="temp-select">
+          <label class="cb-item" id="temp-btn-nenhuma" onclick="selectTemp('nenhuma')" style="cursor:pointer"><span>—</span> Não definida</label>
+          <label class="cb-item" id="temp-btn-quente" onclick="selectTemp('quente')" style="cursor:pointer"><span>🔥</span> Quente — quer comprar logo</label>
+          <label class="cb-item" id="temp-btn-frio" onclick="selectTemp('frio')" style="cursor:pointer"><span>🧊</span> Frio — ainda pesquisando</label>
+        </div>
+      </div>
       <hr class="section-divider">
       <div class="form-group full"><label>Produtos solicitados</label>
         <div class="cb-grid">
@@ -546,6 +567,9 @@ const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 // ═══ STATE ═══
 let contacts=[], vendas=[];
 let contactEditId=null, vendaEditId=null, filterVal='todos';
+let sortOrder='recente'; // 'recente' or 'antigo'
+let tempFilter='todos';  // 'todos', 'quente', 'frio'
+let currentTempSel='nenhuma'; // for modal
 let currentYear=new Date().getFullYear(), currentMonth=new Date().getMonth();
 let selectedContactId=null;
 let profile={nome:'Vendedor',cargo:'Consultor de Viagens'};
@@ -630,7 +654,8 @@ async function upsertContact(obj){
   const row={
     user_id:currentUser.id, nome:obj.nome, data1:obj.data1||null, omni:obj.omni||null, tel:obj.tel||null,
     proxfup:obj.proxfup||null, status:obj.status||null, viagem:obj.viagem||null,
-    sol:solArr, pos:posArr, obs:obj.obs||null, venda_ids:obj.vendaIds||[]
+    sol:solArr, pos:posArr, obs:obj.obs||null, venda_ids:obj.vendaIds||[],
+    temperatura:obj.temperatura||null
   };
   if(obj.id){
     // update existing record
@@ -748,9 +773,38 @@ function statusBadge(s){
 function renderTags(arr,isPos){if(!arr||!arr.length)return'<span style="color:var(--text3);font-size:12px">—</span>';return`<div class="tags">${arr.map(t=>`<span class="tag${isPos?' has':''}">${t}</span>`).join('')}</div>`;}
 function fupClass(d){if(!d)return'';const t=todayISO();return d<t?'overdue':d===t?'today':'';}
 function renderSaleTags(c){const ids=c.vendaIds||[];if(!ids.length)return'<span style="color:var(--text3);font-size:12px">—</span>';return ids.map(vid=>{const v=vendas.find(x=>x.id===vid);return v?`<span class="sale-tag" onclick="showPage('vendas')">◈ ${v.pedido||'s/n'} · ${v.produto}</span>`:''}).join(' ');}
+function setSort(v,el){
+  sortOrder=v;
+  document.querySelectorAll('#sort-recente,#sort-antigo').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderContacts();
+}
+function setTemp(v,el){
+  tempFilter=v;
+  document.querySelectorAll('#temp-todos,#temp-quente,#temp-frio').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderContacts();
+}
+function selectTemp(v){
+  currentTempSel=v;
+  ['nenhuma','quente','frio'].forEach(t=>{
+    const el=document.getElementById('temp-btn-'+t);
+    if(el) el.classList.toggle('checked', t===v);
+  });
+}
+
+function tempEmoji(t){
+  if(t==='quente') return'🔥 ';
+  if(t==='frio') return'🧊 ';
+  return'';
+}
+
 function filterMatches(c){
   const q=(document.getElementById('search').value||'').toLowerCase();
   if(q&&!c.nome.toLowerCase().includes(q)&&!(c.tel||'').includes(q))return false;
+  // temperatura filter
+  if(tempFilter==='quente'&&c.temperatura!=='quente')return false;
+  if(tempFilter==='frio'&&c.temperatura!=='frio')return false;
   if(filterVal==='todos')return true;
   if(filterVal==='1fup')return c.status==='1 FUP - Análise';
   if(filterVal==='2fup')return c.status==='2 FUP - Atualização';
@@ -820,7 +874,11 @@ function renderContacts(){
   const list=contacts.filter(filterMatches).sort((a,b)=>{
     const aD=a.status==='Desistiu após o 3º FUP'?1:0;
     const bD=b.status==='Desistiu após o 3º FUP'?1:0;
-    return aD-bD;
+    if(aD!==bD) return aD-bD;
+    // sort by data1
+    const da=a.data1||'';
+    const db=b.data1||'';
+    return sortOrder==='recente'?(db>da?1:db<da?-1:0):(da>db?1:da<db?-1:0);
   });
   const tb=document.getElementById('tbody-contacts');
   const today=todayISO();
@@ -834,7 +892,8 @@ function renderContacts(){
     const posArr=Array.isArray(c.pos)?c.pos:(c.pos?[c.pos]:[]);
     const solArr=Array.isArray(c.sol)?c.sol:(c.sol?[c.sol]:[]);
     return`<tr class="${rc}">
-      <td><div class="client-name">${c.nome}</div></td>
+      <td><div class="client-name">${tempEmoji(c.temperatura)}${c.nome}</div></td>
+      <td style="font-size:18px;text-align:center" title="${c.temperatura==='quente'?'Quente':c.temperatura==='frio'?'Frio':'Não definida'}">${c.temperatura==='quente'?'🔥':c.temperatura==='frio'?'🧊':'—'}</td>
       <td><div class="date-text">${fmtDate(c.data1)}</div></td>
       <td>${c.omni?`<a href="${c.omni}" class="omni-link" target="_blank">↗ Abrir</a>`:'<span style="color:var(--text3);font-size:12px">—</span>'}</td>
       <td><div class="phone-text">${c.tel||'—'}</div></td>
@@ -910,6 +969,7 @@ function openContactModal(){
   ['f-nome','f-data1','f-tel','f-omni','f-proxfup','f-viagem','f-obs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-status').value='';
   document.querySelectorAll('[name="sol"],[name="pos"]').forEach(cb=>{cb.checked=false;cb.closest('.cb-item').classList.remove('checked');});
+  selectTemp('nenhuma');
   document.getElementById('modalContact').classList.add('open');
   setTimeout(()=>document.getElementById('f-nome').focus(),100);
 }
@@ -922,6 +982,7 @@ function openContactEdit(id){
   document.getElementById('f-viagem').value=c.viagem||'';document.getElementById('f-obs').value=c.obs||'';
   document.querySelectorAll('[name="sol"]').forEach(cb=>{const v=(c.sol||[]).includes(cb.value);cb.checked=v;cb.closest('.cb-item').classList.toggle('checked',v);});
   document.querySelectorAll('[name="pos"]').forEach(cb=>{const v=(c.pos||[]).includes(cb.value);cb.checked=v;cb.closest('.cb-item').classList.toggle('checked',v);});
+  selectTemp(c.temperatura||'nenhuma');
   document.getElementById('modalContact').classList.add('open');
 }
 function closeContactModal(){document.getElementById('modalContact').classList.remove('open');}
@@ -930,7 +991,7 @@ async function saveContact(){
   if(!nome){document.getElementById('f-nome').focus();return;}
   const sol=[...document.querySelectorAll('[name="sol"]:checked')].map(c=>c.value);
   const pos=[...document.querySelectorAll('[name="pos"]:checked')].map(c=>c.value);
-  const obj={id:contactEditId,nome,data1:document.getElementById('f-data1').value,tel:document.getElementById('f-tel').value,omni:document.getElementById('f-omni').value,proxfup:document.getElementById('f-proxfup').value,status:document.getElementById('f-status').value,viagem:document.getElementById('f-viagem').value,sol,pos,obs:document.getElementById('f-obs').value,vendaIds:contactEditId?(contacts.find(x=>x.id===contactEditId)?.vendaIds||[]):[]};
+  const obj={id:contactEditId,nome,data1:document.getElementById('f-data1').value,tel:document.getElementById('f-tel').value,omni:document.getElementById('f-omni').value,proxfup:document.getElementById('f-proxfup').value,status:document.getElementById('f-status').value,viagem:document.getElementById('f-viagem').value,sol,pos,obs:document.getElementById('f-obs').value,temperatura:currentTempSel,vendaIds:contactEditId?(contacts.find(x=>x.id===contactEditId)?.vendaIds||[]):[]};
   closeContactModal();
   showToast(contactEditId?'Salvando...':'Adicionando...','…');
   const newId=await upsertContact(obj);
@@ -1104,6 +1165,15 @@ function renderRelatorios(){
   const totalC=contacts.length,orange=contacts.filter(c=>c.status==='Virou cliente - Orange').length,desistiu=contacts.filter(c=>c.status==='Desistiu após o 3º FUP').length;
   const taxa=totalC>0?((orange/totalC)*100).toFixed(1):0;
   const volume=vendas.reduce((s,v)=>s+Number(v.valor||0),0),commTotal=vendas.reduce((s,v)=>s+Number(v.valor||0)*(Number(v.pct||0)/100),0);
+
+  // tempo médio de venda (do 1º contato até a data da venda)
+  const tempos=vendas.filter(v=>v.contactId&&v.data).map(v=>{
+    const c=contacts.find(x=>x.id===v.contactId);
+    if(!c||!c.data1)return null;
+    const dias=Math.round((new Date(v.data+'T00:00:00')-new Date(c.data1+'T00:00:00'))/(1000*60*60*24));
+    return dias>=0?dias:null;
+  }).filter(d=>d!==null);
+  const tempoMedio=tempos.length>0?Math.round(tempos.reduce((a,b)=>a+b,0)/tempos.length):null;
   const statusMap={};contacts.forEach(c=>{statusMap[c.status]=(statusMap[c.status]||0)+1;});
   const prodMap={};contacts.forEach(c=>(c.sol||[]).forEach(p=>{prodMap[p]=(prodMap[p]||0)+1;}));
   const prodSort=Object.entries(prodMap).sort((a,b)=>b[1]-a[1]);
@@ -1120,6 +1190,21 @@ function renderRelatorios(){
     <div class="stat-card"><div class="stat-label">Taxa de conversão</div><div class="stat-val orange">${taxa}%</div></div>
     <div class="stat-card"><div class="stat-label">Desistiram</div><div class="stat-val gray">${desistiu}</div></div>
     <div class="stat-card"><div class="stat-label">Comissões totais</div><div class="stat-val green" style="font-size:22px">${fmtMoney(commTotal)}</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:28px">
+    <div class="stat-card">
+      <div class="stat-label">⏱ Tempo médio de venda</div>
+      <div class="stat-val" style="font-size:28px">${tempoMedio!==null?tempoMedio+'<span style="font-size:16px;color:var(--text2);margin-left:6px">dias</span>':'—'}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px">Do 1º contato até o fechamento da venda${tempos.length>0?` · baseado em ${tempos.length} venda${tempos.length>1?'s':''} com contato vinculado`:' · vincule contatos às vendas para calcular'}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">🌡 Temperatura dos leads</div>
+      <div style="display:flex;gap:16px;margin-top:8px">
+        <div style="text-align:center"><div style="font-size:24px">🔥</div><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--red)">${contacts.filter(c=>c.temperatura==='quente').length}</div><div style="font-size:11px;color:var(--text3)">Quentes</div></div>
+        <div style="text-align:center"><div style="font-size:24px">🧊</div><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--blue)">${contacts.filter(c=>c.temperatura==='frio').length}</div><div style="font-size:11px;color:var(--text3)">Frios</div></div>
+        <div style="text-align:center"><div style="font-size:24px">—</div><div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--text3)">${contacts.filter(c=>!c.temperatura||c.temperatura==='nenhuma').length}</div><div style="font-size:11px;color:var(--text3)">Sem def.</div></div>
+      </div>
+    </div>
   </div>
   ${monthKeys.length?`<div class="table-card" style="padding:22px;margin-bottom:20px">
     <div style="font-family:var(--font-display);font-size:14px;font-weight:700;margin-bottom:18px;color:var(--text)">Volume de vendas por mês</div>
